@@ -12,19 +12,31 @@ from app.security import hash_password
 
 @pytest.fixture()
 def client():
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False},
-                           poolclass=StaticPool)
+    engine = create_engine(
+        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
+    )
     TestingSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     Base.metadata.create_all(bind=engine)
+
     def override_db():
         db = TestingSession()
-        try: yield db
-        finally: db.close()
+        try:
+            yield db
+        finally:
+            db.close()
+
     app.dependency_overrides[get_db] = override_db
     db = TestingSession()
-    db.add(User(name="Test Admin", email="admin@test.local",
-                password_hash=hash_password("Password123!"), role="admin"))
-    db.commit(); db.close()
+    db.add(
+        User(
+            name="Test Admin",
+            email="admin@test.local",
+            password_hash=hash_password("Password123!"),
+            role="admin",
+        )
+    )
+    db.commit()
+    db.close()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

@@ -1,4 +1,3 @@
-
 from datetime import datetime, timedelta
 
 import requests
@@ -11,24 +10,17 @@ PASSWORD = "ChangeMe123!"
 
 # Autenticação
 login = requests.post(
-    f"{BASE_URL}/auth/login",
-    json={"email": EMAIL, "password": PASSWORD},
-    timeout=15
+    f"{BASE_URL}/auth/login", json={"email": EMAIL, "password": PASSWORD}, timeout=15
 )
 login.raise_for_status()
 
 token = login.json()["access_token"]
 
-headers = {
-    "Authorization": f"Bearer {token}"
-}
+headers = {"Authorization": f"Bearer {token}"}
 
 # Consultar a última leitura
 response = requests.get(
-    f"{BASE_URL}/leituras_etl",
-    params={"maquina_id": MACHINE_ID},
-    headers=headers,
-    timeout=15
+    f"{BASE_URL}/leituras_etl", params={"maquina_id": MACHINE_ID}, headers=headers, timeout=15
 )
 response.raise_for_status()
 
@@ -57,7 +49,6 @@ samples = [
     (75, 48, 2.1, 65, 0),
     (80, 50, 2.3, 68, 0),
     (85, 46, 1.8, 63, 0),
-
     # Classe 1: com falha
     (90, 78, 5.5, 88, 1),
     (95, 82, 6.0, 91, 1),
@@ -78,21 +69,16 @@ created = 0
 for index, (hours, temp, vibration, noise, label) in enumerate(samples, start=1):
 
     payload = {
-        "timestamp": (
-            base_time + timedelta(minutes=index)
-        ).isoformat(),
+        "timestamp": (base_time + timedelta(minutes=index)).isoformat(),
         "operating_hours": base_hours + hours,
         "temperature_c": temp,
         "vibration_mm_s": vibration,
         "noise_db": noise,
-        "failure_within_horizon": label
+        "failure_within_horizon": label,
     }
 
     result = requests.post(
-        f"{BASE_URL}/maquinas/{MACHINE_ID}/leituras",
-        json=payload,
-        headers=headers,
-        timeout=15
+        f"{BASE_URL}/maquinas/{MACHINE_ID}/leituras", json=payload, headers=headers, timeout=15
     )
 
     if result.status_code != 200:

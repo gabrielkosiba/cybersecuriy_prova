@@ -1,4 +1,3 @@
-
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -24,6 +23,7 @@ oauth2_scheme = HTTPBearer()
 # HASH E VERIFICAÇÃO DE SENHAS
 # ==========================================================
 
+
 def hash_password(password: str) -> str:
     """Gera o hash seguro da senha utilizando Argon2."""
     return password_hash.hash(password)
@@ -38,12 +38,11 @@ def verify_password(password: str, hashed: str) -> bool:
 # GERAÇÃO DE TOKEN JWT
 # ==========================================================
 
+
 def create_token(user: User) -> str:
     """Gera um token JWT para o usuário autenticado."""
 
-    expiration = datetime.now(UTC) + timedelta(
-        minutes=settings.access_token_minutes
-    )
+    expiration = datetime.now(UTC) + timedelta(minutes=settings.access_token_minutes)
 
     payload = {
         "sub": str(user.id),
@@ -51,11 +50,7 @@ def create_token(user: User) -> str:
         "exp": expiration,
     }
 
-    token = jwt.encode(
-        payload,
-        settings.secret_key,
-        algorithm="HS256"
-    )
+    token = jwt.encode(payload, settings.secret_key, algorithm="HS256")
 
     return token
 
@@ -64,20 +59,17 @@ def create_token(user: User) -> str:
 # AUTENTICAÇÃO DO USUÁRIO
 # ==========================================================
 
+
 def current_user(
     credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> User:
     """Valida o JWT e retorna o usuário autenticado."""
 
     token = credentials.credentials
 
     try:
-        payload = jwt.decode(
-            token,
-            settings.secret_key,
-            algorithms=["HS256"]
-        )
+        payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
 
         user_id = int(payload["sub"])
 
@@ -104,15 +96,11 @@ def current_user(
 # AUTORIZAÇÃO — ADMINISTRADOR
 # ==========================================================
 
-def admin_user(
-    user: User = Depends(current_user)
-) -> User:
+
+def admin_user(user: User = Depends(current_user)) -> User:
     """Permite acesso somente a usuários administradores."""
 
     if user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Permissão insuficiente"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permissão insuficiente")
 
     return user

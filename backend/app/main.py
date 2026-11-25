@@ -38,16 +38,11 @@ def ensure_maintenance_migration():
     if "maintenances" not in inspector.get_table_names():
         return
 
-    existing_columns = {
-        column["name"] for column in inspector.get_columns("maintenances")
-    }
+    existing_columns = {column["name"] for column in inspector.get_columns("maintenances")}
     if "operating_hours_at_service" not in existing_columns:
         with engine.begin() as connection:
             connection.execute(
-                text(
-                    "ALTER TABLE maintenances "
-                    "ADD COLUMN operating_hours_at_service FLOAT"
-                )
+                text("ALTER TABLE maintenances " "ADD COLUMN operating_hours_at_service FLOAT")
             )
 
 
@@ -90,7 +85,9 @@ def me(user: User = Depends(current_user)):
 
 
 @app.post("/maquinas", response_model=MachineOut)
-def post_machine(data: MachineIn, db: Session = Depends(get_db), user: User = Depends(current_user)):
+def post_machine(
+    data: MachineIn, db: Session = Depends(get_db), user: User = Depends(current_user)
+):
     return create_machine(db, data)
 
 
@@ -125,7 +122,9 @@ def update_machine(
 
 
 @app.delete("/maquinas/{machine_id}")
-def delete_machine(machine_id: int, db: Session = Depends(get_db), user: User = Depends(admin_user)):
+def delete_machine(
+    machine_id: int, db: Session = Depends(get_db), user: User = Depends(admin_user)
+):
     obj = db.get(Machine, machine_id)
     if not obj:
         raise HTTPException(404, "Máquina não encontrada")
@@ -197,9 +196,7 @@ def list_maintenances(
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ):
-    stmt = select(Maintenance).order_by(
-        Maintenance.performed_at.desc(), Maintenance.id.desc()
-    )
+    stmt = select(Maintenance).order_by(Maintenance.performed_at.desc(), Maintenance.id.desc())
     if maquina_id is not None:
         stmt = stmt.where(Maintenance.machine_id == maquina_id)
     return db.scalars(stmt.limit(1000)).all()
@@ -238,17 +235,13 @@ def maintenance_planning(
 
         # Integra a estimativa do Random Forest sem impedir o planejamento
         # preventivo quando ainda não há dados/modelo suficientes.
-        machine_readings = db.scalars(
-            select(Reading).where(Reading.machine_id == machine.id)
-        ).all()
+        machine_readings = db.scalars(select(Reading).where(Reading.machine_id == machine.id)).all()
 
         ai_probability = None
         ai_risk = None
         ai_message = "Previsão de IA indisponível."
         try:
-            ai_probability, ai_risk = predict(
-                db, machine_readings, settings.model_dir
-            )
+            ai_probability, ai_risk = predict(db, list(machine_readings), settings.model_dir)
             ai_message = {
                 "elevado": "Risco elevado estimado pela IA. Recomenda-se inspeção antecipada.",
                 "moderado": "Risco moderado estimado pela IA. Recomenda-se acompanhar os sensores.",
@@ -272,70 +265,73 @@ def maintenance_planning(
             "current_operating_hours": current_hours,
             "maintenance_interval_hours": MAINTENANCE_INTERVAL_HOURS,
             "warning_hours": MAINTENANCE_WARNING_HOURS,
-            "ai_probability": (
-                round(ai_probability, 4) if ai_probability is not None else None
-            ),
+            "ai_probability": (round(ai_probability, 4) if ai_probability is not None else None),
             "ai_probability_percent": (
-                round(ai_probability * 100, 2)
-                if ai_probability is not None else None
+                round(ai_probability * 100, 2) if ai_probability is not None else None
             ),
             "ai_risk": ai_risk,
             "ai_message": ai_message,
         }
 
         if last_maintenance is None:
-            results.append({
-                **base,
-                "status": "sem_historico",
-                "status_label": "Sem manutenção registrada",
-                "message": "Registre a última manutenção e o horímetro correspondente para iniciar o planejamento.",
-                "last_maintenance_id": None,
-                "last_maintenance_at": None,
-                "last_maintenance_operating_hours": None,
-                "hours_since_maintenance": None,
-                "next_maintenance_at_hours": None,
-                "hours_remaining": None,
-                "progress_percent": None,
-                "recommendation": ai_message,
-            })
+            results.append(
+                {
+                    **base,
+                    "status": "sem_historico",
+                    "status_label": "Sem manutenção registrada",
+                    "message": "Registre a última manutenção e o horímetro correspondente para iniciar o planejamento.",
+                    "last_maintenance_id": None,
+                    "last_maintenance_at": None,
+                    "last_maintenance_operating_hours": None,
+                    "hours_since_maintenance": None,
+                    "next_maintenance_at_hours": None,
+                    "hours_remaining": None,
+                    "progress_percent": None,
+                    "recommendation": ai_message,
+                }
+            )
             continue
 
         baseline_hours = last_maintenance.operating_hours_at_service
 
         if baseline_hours is None:
-            results.append({
-                **base,
-                "status": "sem_horimetro_historico",
-                "status_label": "Horímetro não informado",
-                "message": "A última manutenção não possui horímetro registrado. Registre uma nova manutenção com o horímetro atual para iniciar o cálculo.",
-                "last_maintenance_id": last_maintenance.id,
-                "last_maintenance_at": last_maintenance.performed_at,
-                "last_maintenance_operating_hours": None,
-                "hours_since_maintenance": None,
-                "next_maintenance_at_hours": None,
-                "hours_remaining": None,
-                "progress_percent": None,
-                "recommendation": ai_message,
-            })
+            results.append(
+                {
+                    **base,
+                    "status": "sem_horimetro_historico",
+                    "status_label": "Horímetro não informado",
+                    "message": "A última manutenção não possui horímetro registrado. Registre uma nova manutenção com o horímetro atual para iniciar o cálculo.",
+                    "last_maintenance_id": last_maintenance.id,
+                    "last_maintenance_at": last_maintenance.performed_at,
+                    "last_maintenance_operating_hours": None,
+                    "hours_since_maintenance": None,
+                    "next_maintenance_at_hours": None,
+                    "hours_remaining": None,
+                    "progress_percent": None,
+                    "recommendation": ai_message,
+                }
+            )
             continue
 
         elapsed_hours = current_hours - baseline_hours
 
         if elapsed_hours < 0:
-            results.append({
-                **base,
-                "status": "horimetro_inconsistente",
-                "status_label": "Verificar horímetro",
-                "message": "O horímetro atual é menor que o registrado na última manutenção. Confira os dados antes de usar o planejamento.",
-                "last_maintenance_id": last_maintenance.id,
-                "last_maintenance_at": last_maintenance.performed_at,
-                "last_maintenance_operating_hours": baseline_hours,
-                "hours_since_maintenance": elapsed_hours,
-                "next_maintenance_at_hours": baseline_hours + MAINTENANCE_INTERVAL_HOURS,
-                "hours_remaining": None,
-                "progress_percent": None,
-                "recommendation": ai_message,
-            })
+            results.append(
+                {
+                    **base,
+                    "status": "horimetro_inconsistente",
+                    "status_label": "Verificar horímetro",
+                    "message": "O horímetro atual é menor que o registrado na última manutenção. Confira os dados antes de usar o planejamento.",
+                    "last_maintenance_id": last_maintenance.id,
+                    "last_maintenance_at": last_maintenance.performed_at,
+                    "last_maintenance_operating_hours": baseline_hours,
+                    "hours_since_maintenance": elapsed_hours,
+                    "next_maintenance_at_hours": baseline_hours + MAINTENANCE_INTERVAL_HOURS,
+                    "hours_remaining": None,
+                    "progress_percent": None,
+                    "recommendation": ai_message,
+                }
+            )
             continue
 
         hours_remaining = max(MAINTENANCE_INTERVAL_HOURS - elapsed_hours, 0.0)
@@ -357,28 +353,30 @@ def maintenance_planning(
             status_label = "Em dia"
             message = "A máquina está dentro do intervalo preventivo."
 
-        results.append({
-            **base,
-            "status": status,
-            "status_label": status_label,
-            "message": message,
-            "last_maintenance_id": last_maintenance.id,
-            "last_maintenance_at": last_maintenance.performed_at,
-            "last_maintenance_operating_hours": baseline_hours,
-            "hours_since_maintenance": round(elapsed_hours, 2),
-            "next_maintenance_at_hours": round(
-                baseline_hours + MAINTENANCE_INTERVAL_HOURS, 2
-            ),
-            "hours_remaining": round(hours_remaining, 2),
-            "progress_percent": round(progress, 2),
-            "recommendation": (
-                "Priorize uma inspeção antecipada devido ao risco elevado estimado pela IA."
-                if ai_risk == "elevado"
-                else "Acompanhe os sensores e programe a manutenção preventiva."
-                if ai_risk == "moderado"
-                else "Siga o planejamento preventivo por horas de operação."
-            ),
-        })
+        results.append(
+            {
+                **base,
+                "status": status,
+                "status_label": status_label,
+                "message": message,
+                "last_maintenance_id": last_maintenance.id,
+                "last_maintenance_at": last_maintenance.performed_at,
+                "last_maintenance_operating_hours": baseline_hours,
+                "hours_since_maintenance": round(elapsed_hours, 2),
+                "next_maintenance_at_hours": round(baseline_hours + MAINTENANCE_INTERVAL_HOURS, 2),
+                "hours_remaining": round(hours_remaining, 2),
+                "progress_percent": round(progress, 2),
+                "recommendation": (
+                    "Priorize uma inspeção antecipada devido ao risco elevado estimado pela IA."
+                    if ai_risk == "elevado"
+                    else (
+                        "Acompanhe os sensores e programe a manutenção preventiva."
+                        if ai_risk == "moderado"
+                        else "Siga o planejamento preventivo por horas de operação."
+                    )
+                ),
+            }
+        )
 
     return {
         "interval_hours": MAINTENANCE_INTERVAL_HOURS,
@@ -464,12 +462,10 @@ def make_prediction(
     if not machine:
         raise HTTPException(404, "Máquina não encontrada")
 
-    readings = db.scalars(
-        select(Reading).where(Reading.machine_id == machine_id)
-    ).all()
+    readings = db.scalars(select(Reading).where(Reading.machine_id == machine_id)).all()
 
     try:
-        probability, risk = predict(db, readings, settings.model_dir)
+        probability, risk = predict(db, list(readings), settings.model_dir)
     except (ValueError, FileNotFoundError) as exc:
         raise HTTPException(422, str(exc))
 
@@ -534,6 +530,7 @@ def dashboard(db: Session = Depends(get_db), user: User = Depends(current_user))
         "readings": db.scalar(select(func.count(Reading.id))) or 0,
         "high_risk": db.scalar(
             select(func.count(Prediction.id)).where(Prediction.risk == "elevado")
-        ) or 0,
+        )
+        or 0,
         "predictions": db.scalar(select(func.count(Prediction.id))) or 0,
     }

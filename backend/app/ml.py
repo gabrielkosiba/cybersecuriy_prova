@@ -44,13 +44,9 @@ def train_model(db: Session, model_dir: str) -> dict:
         .order_by(Reading.timestamp)
     ).all()
 
-    df = pd.DataFrame([
-        {
-            key: getattr(row, key)
-            for key in FEATURES + ["failure_within_horizon"]
-        }
-        for row in rows
-    ]).dropna()
+    df = pd.DataFrame(
+        [{key: getattr(row, key) for key in FEATURES + ["failure_within_horizon"]} for row in rows]
+    ).dropna()
 
     if len(df) < 20 or df["failure_within_horizon"].nunique() < 2:
         raise ValueError(
@@ -155,19 +151,11 @@ def predict(
     values = {feature: getattr(latest, feature) for feature in FEATURES}
 
     if any(value is None for value in values.values()):
-        raise ValueError(
-            "A leitura mais recente não contém todas as variáveis exigidas."
-        )
+        raise ValueError("A leitura mais recente não contém todas as variáveis exigidas.")
 
     bundle = joblib.load(registry.artifact_path)
-    probability = float(
-        bundle["model"].predict_proba(pd.DataFrame([values]))[0][1]
-    )
+    probability = float(bundle["model"].predict_proba(pd.DataFrame([values]))[0][1])
 
-    risk = (
-        "elevado" if probability >= 0.7
-        else "moderado" if probability >= 0.4
-        else "baixo"
-    )
+    risk = "elevado" if probability >= 0.7 else "moderado" if probability >= 0.4 else "baixo"
 
     return probability, risk
