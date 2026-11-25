@@ -1,9 +1,12 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
 import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
 from app.models import Reading
+
 
 def run_etl(db: Session, output_dir: str = "../../data/processed") -> dict:
     rows = db.scalars(select(Reading).order_by(Reading.timestamp)).all()
@@ -27,6 +30,6 @@ def run_etl(db: Session, output_dir: str = "../../data/processed") -> dict:
     out.mkdir(parents=True, exist_ok=True)
     target = out / "readings_processed.csv"
     df.to_csv(target, index=False)
-    return {"executed_at": datetime.now(timezone.utc).isoformat(), "received": received,
+    return {"executed_at": datetime.now(UTC).isoformat(), "received": received,
             "processed": len(df), "discarded": duplicates, "corrected": 0,
             "errors": [], "output": str(target)}

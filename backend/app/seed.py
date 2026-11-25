@@ -1,4 +1,4 @@
-from app.database import Base, engine, SessionLocal
+from app.database import Base, SessionLocal, engine
 from app.models import User
 from app.security import hash_password
 

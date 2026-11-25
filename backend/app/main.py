@@ -1,23 +1,28 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import func, inspect, select, text
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func, inspect, text
 
 from app.config import settings
 from app.database import Base, engine, get_db
-from app.models import User, Machine, Reading, Maintenance, Prediction, ModelRegistry
-from app.schemas import (
-    LoginIn, TokenOut, MachineIn, MachineOut, ReadingIn, ReadingOut,
-    MaintenanceIn, MaintenanceOut,
-)
-from app.security import verify_password, create_token, current_user, admin_user
-from app.services import create_machine, add_reading
 from app.etl import run_etl
-from app.ml import train_model, predict
-
+from app.ml import predict, train_model
+from app.models import Machine, Maintenance, ModelRegistry, Prediction, Reading, User
+from app.schemas import (
+    LoginIn,
+    MachineIn,
+    MachineOut,
+    MaintenanceIn,
+    MaintenanceOut,
+    ReadingIn,
+    ReadingOut,
+    TokenOut,
+)
+from app.security import admin_user, create_token, current_user, verify_password
+from app.services import add_reading, create_machine
 
 # Intervalo global inicial para demonstração.
 MAINTENANCE_INTERVAL_HOURS = 500.0

@@ -1,16 +1,15 @@
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
-from pwdlib import PasswordHash
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
 from app.models import User
-
 
 # ==========================================================
 # CONFIGURAÇÕES DE SEGURANÇA
@@ -42,7 +41,7 @@ def verify_password(password: str, hashed: str) -> bool:
 def create_token(user: User) -> str:
     """Gera um token JWT para o usuário autenticado."""
 
-    expiration = datetime.now(timezone.utc) + timedelta(
+    expiration = datetime.now(UTC) + timedelta(
         minutes=settings.access_token_minutes
     )
 

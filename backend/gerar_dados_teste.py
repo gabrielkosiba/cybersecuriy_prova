@@ -1,6 +1,7 @@
 
-import requests
 from datetime import datetime, timedelta
+
+import requests
 
 BASE_URL = "http://127.0.0.1:8000"
 MACHINE_ID = 1

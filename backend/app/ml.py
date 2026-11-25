@@ -1,19 +1,17 @@
-from datetime import datetime, timezone
-from pathlib import Path
 import json
 import re
+from datetime import UTC, datetime
+from pathlib import Path
 
 import joblib
 import pandas as pd
-
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Reading, ModelRegistry
-
+from app.models import ModelRegistry, Reading
 
 FEATURES = [
     "operating_hours",
@@ -108,7 +106,7 @@ def train_model(db: Session, model_dir: str) -> dict:
         available=True,
         metrics_json=json.dumps(metrics),
         artifact_path=str(artifact),
-        trained_at=datetime.now(timezone.utc),
+        trained_at=datetime.now(UTC),
     )
     db.add(registry)
 

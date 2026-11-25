@@ -1,8 +1,9 @@
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session
-from sqlalchemy import select
 from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.models import Machine, Reading
+
 
 def create_machine(db: Session, data):
     obj = Machine(**data.model_dump())
