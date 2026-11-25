@@ -18,7 +18,7 @@ jobs:
       resumo: ${{ steps.resultados.outputs.resumo }}
       total: ${{ steps.resultados.outputs.total }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Analisar código
         run: semgrep scan --config p/default --config p/security-audit --config p/owasp-top-ten --metrics=off --json --output semgrep.json .
@@ -86,7 +86,7 @@ jobs:
       resumo: ${{ steps.resultados.outputs.resumo }}
       total: ${{ steps.resultados.outputs.total }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Preparar análise
         run: rm -f osv.json
@@ -95,7 +95,7 @@ jobs:
       - name: Analisar dependências
         id: osv
         continue-on-error: true
-        uses: google/osv-scanner-action/osv-scanner-action@v2.7.0
+        uses: google/osv-scanner-action/osv-scanner-action@0a65f82af05cd58cf587827b0bb0489548c18346 # v2.7.0
         with:
           scan-args: |-
             --recursive
