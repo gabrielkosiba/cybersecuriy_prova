@@ -1,0 +1,15 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-me-before-deploy}
+      DATABASE_URL: sqlite:////data/automhub.db
+      MODEL_DIR: /models
+      CORS_ORIGINS: http://localhost:5173
+    volumes:
+      - automhub_data:/data
+      - ./models:/models
+volumes:
+  automhub_data:
