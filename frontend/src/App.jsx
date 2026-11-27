@@ -431,12 +431,38 @@ export default function App() {
               ))}
             </section>
 
-            <article>
-              <h2>Visão operacional</h2>
-              <p className="muted">
-                Indicadores operacionais carregados diretamente da API.
-              </p>
-            </article>
+<article className="operational-summary">
+  <h2>Visão operacional</h2>
+
+  {!data ? (
+    <p className="muted">
+      Carregando indicadores operacionais da API...
+    </p>
+  ) : (
+    <>
+      <p>
+        O Autom Hub monitora atualmente{" "}
+        <strong>{data.machines ?? 0} máquinas</strong>, com{" "}
+        <strong>{data.readings ?? 0} leituras registradas</strong> e{" "}
+        <strong>{data.predictions ?? 0} previsões realizadas</strong>.
+      </p>
+
+      <p>
+        O indicador de risco elevado retornou{" "}
+        <strong>{data.high_risk ?? 0}</strong>.
+        {Number(data.high_risk ?? 0) > 0
+          ? " Recomenda-se verificar os equipamentos associados a essas classificações e acompanhar suas condições operacionais."
+          : " Não há registros classificados como risco elevado nos indicadores retornados pela API."}
+      </p>
+
+      <small className="muted">
+        Resumo gerado automaticamente com os indicadores recebidos da API.
+        A classificação de risco representa uma estimativa do modelo, não a confirmação de uma falha.
+      </small>
+    </>
+  )}
+</article>
+
           </>
         )}
 
